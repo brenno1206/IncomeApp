@@ -15,6 +15,19 @@ struct HomeView: View {
         Transaction(title: "Crunchyroll", type: .expense, amount: 15.00, date: Date())
     ]
     
+    fileprivate func FloatingButton() -> some View {
+        VStack {
+            Spacer()
+            NavigationLink {
+                AddTransactionView(transactions: $transactions)
+            } label: {
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 50))
+                    .foregroundStyle(.primaryLightGreen)
+            }
+        }
+    }
+    
     fileprivate func BalanceView() -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: 8)
@@ -60,18 +73,34 @@ struct HomeView: View {
     }
     
     var body: some View {
-        VStack {
-            BalanceView()
-            List {
-                ForEach(transactions) { transaction in
-                    TransactionView(transaction: transaction)
+        NavigationStack {
+            ZStack {
+                VStack {
+                    BalanceView()
+                    List {
+                        ForEach(transactions) { transaction in
+                            TransactionView(transaction: transaction)
+                        }
+                    }
+                    .scrollContentBackground(.hidden)
+                }
+                FloatingButton()
+            }
+            .navigationTitle("Income")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        
+                    } label: {
+                        Image(systemName: "gearshape.fill")
+                    }
+
                 }
             }
-            .scrollContentBackground(.hidden)
         }
     }
 }
 
-#Preview {
-    HomeView()
-}
+//#Preview {
+//    HomeView()
+//}
