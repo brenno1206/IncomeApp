@@ -9,14 +9,32 @@ import SwiftUI
 
 struct HomeView: View {
     
-    @State private var transactions: [Transaction] = [
-        Transaction(title: "Apple", type: .expense, amount: 5.00, date: Date()),
-//        Transaction(title: "UVV", type: .income, amount: 400.00, date: Date()),
-        Transaction(title: "Crunchyroll", type: .expense, amount: 15.00, date: Date())
-    ]
+    @State private var transactions: [Transaction] = []
     
     @State private var showAddTransactionView = false
     @State private var transactionToEdit: Transaction?
+    
+    private var expense : String {
+        let sumExpenses = transactions.filter({$0.type == .expense}).reduce(0.00) { $0 + $1.amount }
+        let numberFormater = NumberFormatter()
+        numberFormater.numberStyle = .currency
+        return numberFormater.string(from: sumExpenses as NSNumber) ?? "R$ 0.00"
+    }
+    
+    private var income : String {
+        let sumIncomes = transactions.filter({$0.type == .expense}).reduce(0.00) { $0 + $1.amount }
+        let numberFormater = NumberFormatter()
+        numberFormater.numberStyle = .currency
+        return numberFormater.string(from: sumIncomes as NSNumber) ?? "R$ 0.00"
+    }
+    
+    private var balance : String {
+        let totalBalance = transactions.reduce(0.00) { $1 .type == .expense ? $0 - $1.amount : $0 + $1.amount }
+        
+        let numberFormater = NumberFormatter()
+        numberFormater.numberStyle = .currency
+        return numberFormater.string(from: totalBalance as NSNumber) ?? "R$ 0.00"
+    }
     
     fileprivate func FloatingButton() -> some View {
         VStack {
@@ -41,7 +59,7 @@ struct HomeView: View {
                         Text("BALANCE")
                             .font(.caption)
                             .foregroundStyle(.white)
-                        Text("R$ 380")
+                        Text(balance)
                             .font(.system(size: 42, weight: .light))
                             .foregroundStyle(.white)
                     }
@@ -53,7 +71,7 @@ struct HomeView: View {
                         Text("Expense")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(.white)
-                        Text("R$ 20")
+                        Text(expense)
                             .font(.system(size: 15, weight: .regular))
                             .foregroundStyle(.white)
                     }
@@ -61,7 +79,7 @@ struct HomeView: View {
                         Text("Income")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(.white)
-                        Text("R$ 20")
+                        Text(income)
                             .font(.system(size: 15, weight: .regular))
                             .foregroundStyle(.white)
                     }
@@ -75,10 +93,17 @@ struct HomeView: View {
         .padding(.horizontal)
     }
     
+    private func deleteTransaction(at offsets: IndexSet) {
+        transactions.remove(atOffsets: offsets)
+    }
+    
     var body: some View {
         NavigationStack {
             ZStack {
-                VStack {
+                VStack(alignment: .leading) {
+                    Text("Income & Expenses")
+                        .font(.system(size: 35, weight: .bold))
+                        .padding(.leading)
                     BalanceView()
                     List {
                         ForEach(transactions) { transaction in
@@ -89,33 +114,24 @@ struct HomeView: View {
                                     .foregroundStyle(.black)
                             }
                         }
+                        .onDelete(perform: deleteTransaction)
                     }
                     .scrollContentBackground(.hidden)
-                    .padding(.top)
+                    .padding(.vertical)
+                    .padding(.bottom, 30)
                 }
                 FloatingButton()
             }
-            .navigationTitle("Income")
             .navigationDestination(item: $transactionToEdit, destination: { transaction in
                 AddTransactionView(transactions: $transactions, transactionToEdit: transaction)
             })
             .navigationDestination(isPresented: $showAddTransactionView, destination: {
                 AddTransactionView(transactions: $transactions)
             })
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        
-                    } label: {
-                        Image(systemName: "gearshape.fill")
-                    }
-
-                }
-            }
         }
     }
 }
 
-//#Preview {
-//    HomeView()
-//}
+#Preview {
+    HomeView()
+}
