@@ -8,39 +8,14 @@
 import SwiftUI
 
 struct HomeView: View {
-    
-    @State private var transactions: [Transaction] = []
-    
-    @State private var showAddTransactionView = false
-    @State private var transactionToEdit: Transaction?
-    
-    private var expense : String {
-        let sumExpenses = transactions.filter({$0.type == .expense}).reduce(0.00) { $0 + $1.amount }
-        let numberFormater = NumberFormatter()
-        numberFormater.numberStyle = .currency
-        return numberFormater.string(from: sumExpenses as NSNumber) ?? "R$ 0.00"
-    }
-    
-    private var income : String {
-        let sumIncomes = transactions.filter({$0.type == .expense}).reduce(0.00) { $0 + $1.amount }
-        let numberFormater = NumberFormatter()
-        numberFormater.numberStyle = .currency
-        return numberFormater.string(from: sumIncomes as NSNumber) ?? "R$ 0.00"
-    }
-    
-    private var balance : String {
-        let totalBalance = transactions.reduce(0.00) { $1 .type == .expense ? $0 - $1.amount : $0 + $1.amount }
         
-        let numberFormater = NumberFormatter()
-        numberFormater.numberStyle = .currency
-        return numberFormater.string(from: totalBalance as NSNumber) ?? "R$ 0.00"
-    }
+    @StateObject private var viewModel = TransactionViewModel()
     
     fileprivate func FloatingButton() -> some View {
         VStack {
             Spacer()
             NavigationLink {
-                AddTransactionView(transactions: $transactions)
+                AddTransactionView(viewModel: viewModel)
             } label: {
                 Image(systemName: "plus.circle.fill")
                     .font(.system(size: 50))
@@ -59,7 +34,7 @@ struct HomeView: View {
                         Text("BALANCE")
                             .font(.caption)
                             .foregroundStyle(.white)
-                        Text(balance)
+                        Text(viewModel.balance)
                             .font(.system(size: 42, weight: .light))
                             .foregroundStyle(.white)
                     }
@@ -71,7 +46,7 @@ struct HomeView: View {
                         Text("Expense")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(.white)
-                        Text(expense)
+                        Text(viewModel.expense)
                             .font(.system(size: 15, weight: .regular))
                             .foregroundStyle(.white)
                     }
@@ -79,7 +54,7 @@ struct HomeView: View {
                         Text("Income")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(.white)
-                        Text(income)
+                        Text(viewModel.income)
                             .font(.system(size: 15, weight: .regular))
                             .foregroundStyle(.white)
                     }
@@ -93,10 +68,6 @@ struct HomeView: View {
         .padding(.horizontal)
     }
     
-    private func deleteTransaction(at offsets: IndexSet) {
-        transactions.remove(atOffsets: offsets)
-    }
-    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -106,15 +77,15 @@ struct HomeView: View {
                         .padding(.leading)
                     BalanceView()
                     List {
-                        ForEach(transactions) { transaction in
+                        ForEach(viewModel.transactions) { transaction in
                             Button {
-                                transactionToEdit = transaction
+                                viewModel.transactionToEdit = transaction
                             } label: {
                                 TransactionView(transaction: transaction)
                                     .foregroundStyle(.black)
                             }
                         }
-                        .onDelete(perform: deleteTransaction)
+                        .onDelete(perform: viewModel.deleteTransaction)
                     }
                     .scrollContentBackground(.hidden)
                     .padding(.vertical)
@@ -122,11 +93,11 @@ struct HomeView: View {
                 }
                 FloatingButton()
             }
-            .navigationDestination(item: $transactionToEdit, destination: { transaction in
-                AddTransactionView(transactions: $transactions, transactionToEdit: transaction)
+            .navigationDestination(item: $viewModel.transactionToEdit, destination: { transaction in
+                AddTransactionView(viewModel: viewModel)
             })
-            .navigationDestination(isPresented: $showAddTransactionView, destination: {
-                AddTransactionView(transactions: $transactions)
+            .navigationDestination(isPresented: $viewModel.showAddTransactionView, destination: {
+                AddTransactionView(viewModel: viewModel)
             })
         }
     }

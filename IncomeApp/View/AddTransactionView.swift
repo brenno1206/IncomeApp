@@ -9,27 +9,13 @@ import SwiftUI
 
 struct AddTransactionView: View {
     
-    @State private var amount = 0.00
-    @State private var selectedTransactionType: TransactionType = .expense
-    @State private var transactionTitle: String = ""
-    @State private var alertTitle: String = ""
-    @State private var alertMessage: String = ""
-    @State private var showAlert: Bool = false
-    
-    
-    @Binding var transactions: [Transaction]
     @Environment(\.dismiss) var dismiss
-    var transactionToEdit: Transaction?
-    
-    var numberFormatter: NumberFormatter {
-        let numberFormatter = NumberFormatter()
-        numberFormatter.numberStyle = .currency
-        return numberFormatter
-    }
+   
+    @ObservedObject var viewModel: TransactionViewModel
     
     var body: some View {
         VStack {
-            TextField("0.00", value: $amount, formatter: numberFormatter)
+            TextField("0.00", value: $viewModel.amountToAdd, formatter: viewModel.numberFormatter)
                 .font(.system(size: 60, weight: .thin))
                 .multilineTextAlignment(.center)
                 .keyboardType(.numberPad)
@@ -37,47 +23,24 @@ struct AddTransactionView: View {
                 .fill(.gray)
                 .frame(height: 0.6)
                 .padding(.horizontal, 30)
-            Picker("Choose Type", selection: $selectedTransactionType) {
+            Picker("Choose Type", selection: $viewModel.selectedTransactionType) {
                 ForEach(TransactionType.allCases) { transactionType in
                     Text(transactionType.title)
                         .tag(transactionType)
                     
                 }
             }
-            TextField("Title", text: $transactionTitle)
+            TextField("Title", text: $viewModel.transactionTitle)
                 .font(.system(size: 15))
                 .textFieldStyle(.roundedBorder)
                 .padding(.horizontal, 30)
                 .padding(.top)
             Button {
-                guard transactionTitle.count >= 2 else {
-                    alertTitle = "Invalid Title"
-                    alertMessage = "Please enter a valid title for your transaction."
-                    showAlert = true
-                    return }
-                
-                guard amount != 0 else {
-                    alertTitle = "Invalid Amount"
-                    alertMessage = "Please enter a valid amount for your transaction."
-                    showAlert = true
-                    return }
-                
-                let transaction = Transaction(title: transactionTitle, type: selectedTransactionType, amount: amount, date: Date())
-                
-                if let transactionToEdit = transactionToEdit {
-                    guard let indexOfTransactionToEdit = transactions.firstIndex(of: transactionToEdit) else {
-                        alertTitle = "Something went wrong"
-                        alertMessage = "Cannot update the transaction. Please try again."
-                        showAlert = true
-                        return
-                    }
-                    transactions[indexOfTransactionToEdit] = transaction
-                } else {
-                    transactions.append(transaction)
+                if viewModel.addTransaction() {
+                    dismiss()
                 }
-                dismiss()
             } label: {
-                Text(transactionToEdit == nil ? "Add Transaction" : "Save Changes")
+                Text(viewModel.transactionToEdit == nil ? "Add Transaction" : "Save Changes")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(height: 40)
@@ -91,21 +54,21 @@ struct AddTransactionView: View {
             Spacer()
         }
         .onAppear() {
-            if let transactionToEdit = transactionToEdit {
-                amount = transactionToEdit.amount
-                transactionTitle = transactionToEdit.title
-                selectedTransactionType = transactionToEdit.type
+            if let transactionToEdit = viewModel.transactionToEdit {
+                viewModel.amountToAdd = transactionToEdit.amount
+                viewModel.transactionTitle = transactionToEdit.title
+                viewModel.selectedTransactionType = transactionToEdit.type
             }
         }
         .padding(.top)
-        .alert(alertTitle, isPresented: $showAlert) {
+        .alert(viewModel.alertTitle, isPresented: $viewModel.showAlert) {
             Button {
                 
             } label: {
                 Text("Ok")
             }
         } message: {
-            Text(alertMessage)
+            Text(viewModel.alertMessage)
         }
 
     }
