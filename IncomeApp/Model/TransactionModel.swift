@@ -13,6 +13,15 @@ struct Transaction : Identifiable {
     let type: TransactionType
     let amount: Double
     let date: Date
+}
+
+extension Transaction: Hashable {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+
+extension Transaction {
     var displayDate: String {
         let dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .short

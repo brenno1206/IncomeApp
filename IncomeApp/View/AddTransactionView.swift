@@ -12,12 +12,14 @@ struct AddTransactionView: View {
     @State private var amount = 0.00
     @State private var selectedTransactionType: TransactionType = .expense
     @State private var transactionTitle: String = ""
-    
     @State private var alertTitle: String = ""
     @State private var alertMessage: String = ""
     @State private var showAlert: Bool = false
+    
+    
     @Binding var transactions: [Transaction]
     @Environment(\.dismiss) var dismiss
+    var transactionToEdit: Transaction?
     
     var numberFormatter: NumberFormatter {
         let numberFormatter = NumberFormatter()
@@ -62,11 +64,20 @@ struct AddTransactionView: View {
                 
                 let transaction = Transaction(title: transactionTitle, type: selectedTransactionType, amount: amount, date: Date())
                 
-                transactions.append(transaction)
-                
+                if let transactionToEdit = transactionToEdit {
+                    guard let indexOfTransactionToEdit = transactions.firstIndex(of: transactionToEdit) else {
+                        alertTitle = "Something went wrong"
+                        alertMessage = "Cannot update the transaction. Please try again."
+                        showAlert = true
+                        return
+                    }
+                    transactions[indexOfTransactionToEdit] = transaction
+                } else {
+                    transactions.append(transaction)
+                }
                 dismiss()
             } label: {
-                Text("Add Transaction")
+                Text(transactionToEdit == nil ? "Add Transaction" : "Save Changes")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(height: 40)
@@ -78,6 +89,13 @@ struct AddTransactionView: View {
             .padding(.horizontal, 30)
 
             Spacer()
+        }
+        .onAppear() {
+            if let transactionToEdit = transactionToEdit {
+                amount = transactionToEdit.amount
+                transactionTitle = transactionToEdit.title
+                selectedTransactionType = transactionToEdit.type
+            }
         }
         .padding(.top)
         .alert(alertTitle, isPresented: $showAlert) {
